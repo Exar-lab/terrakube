@@ -30,6 +30,7 @@ import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.math.BigDecimal;
 import java.sql.Types;
 import java.util.Date;
 import java.util.List;
@@ -134,6 +135,18 @@ public class Workspace extends GenericAuditFields {
     @Column(name = "policy_compliance_status")
     @Enumerated(EnumType.STRING)
     private io.terrakube.api.rs.policy.PolicyComplianceStatus policyComplianceStatus = io.terrakube.api.rs.policy.PolicyComplianceStatus.UNKNOWN;
+
+    @UpdatePermission(expression = "user is a super service")
+    @Column(name = "current_monthly_cost", precision = 19, scale = 4)
+    private BigDecimal currentMonthlyCost;
+
+    @UpdatePermission(expression = "user is a super service")
+    @Column(name = "cost_currency", length = 10)
+    private String costCurrency = "USD";
+
+    @UpdatePermission(expression = "user is a super service")
+    @Column(name = "cost_updated_at")
+    private Date costUpdatedAt;
 
     @ManyToOne
     private Organization organization;
