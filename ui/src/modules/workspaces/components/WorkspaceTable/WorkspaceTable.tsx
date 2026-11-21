@@ -1,4 +1,4 @@
-import { Button, Tag, Typography, Pagination } from "antd";
+import { Button, Tag, Tooltip, Typography, Pagination } from "antd";
 import {
   FolderOutlined,
   ClockCircleOutlined,
@@ -22,6 +22,7 @@ import VcsLogo from "@/components/display/VcsLogo";
 import getVcsNameFromUrl from "@/modules/workspaces/utils/getVcsNameFromUrl";
 import getVcsTypeFromUrl from "@/modules/workspaces/utils/getVcsTypeFromUrl";
 import { WorkspaceSortOption } from "@/modules/workspaces/utils/workspaceSort";
+import { COST_ESTIMATION_DISCLAIMER, formatMonthlyCost } from "@/modules/workspaces/utils/costFormat";
 import "./WorkspaceTable.css";
 import { relativeTime } from "@/modules/utils/dates";
 
@@ -55,7 +56,9 @@ type Props = {
   groupsForcedOpen?: boolean;
 };
 
-type SortSpec = { asc: WorkspaceSortOption; desc: WorkspaceSortOption } | { single: WorkspaceSortOption };
+type SortSpec =
+  | { asc: WorkspaceSortOption; desc: WorkspaceSortOption; defaultOrder?: "asc" | "desc" }
+  | { single: WorkspaceSortOption };
 
 function activateOnKey(e: KeyboardEvent, callback: () => void) {
   if (e.key === "Enter" || e.key === " ") {
@@ -92,7 +95,8 @@ function SortableHeader({
   }
   const isAsc = sortOption === spec.asc;
   const isDesc = sortOption === spec.desc;
-  const activate = () => onSortChange(isAsc ? spec.desc : spec.asc);
+  const activate = () =>
+    onSortChange(spec.defaultOrder === "desc" ? (isDesc ? spec.asc : spec.desc) : isAsc ? spec.desc : spec.asc);
   return (
     <span
       className="workspace-sortable-header"
@@ -179,6 +183,19 @@ function WorkspaceRow({
       <div className="workspace-col-version">
         <IacTypeLogo type={item.iacType} />
         <span>{item.terraformVersion}</span>
+      </div>
+      <div className="workspace-col-cost">
+        <Tooltip
+          title={
+            item.currentMonthlyCost != null
+              ? item.costUpdatedAt
+                ? `${COST_ESTIMATION_DISCLAIMER} Updated ${relativeTime(item.costUpdatedAt) ?? item.costUpdatedAt}.`
+                : COST_ESTIMATION_DISCLAIMER
+              : `No cost estimate recorded yet. ${COST_ESTIMATION_DISCLAIMER}`
+          }
+        >
+          <span>{formatMonthlyCost(item.currentMonthlyCost, item.costCurrency)}</span>
+        </Tooltip>
       </div>
       <div className="workspace-col-source">
         {item.branch !== "remote-content" && item.normalizedSource ? (
@@ -320,6 +337,14 @@ export default function WorkspaceTable({
           <SortableHeader
             label="Version"
             spec={{ asc: "terraformVersion_asc", desc: "terraformVersion_desc" }}
+            sortOption={sortOption}
+            onSortChange={onSortChange}
+          />
+        </div>
+        <div className="workspace-col-cost">
+          <SortableHeader
+            label="Est. Monthly Cost"
+            spec={{ asc: "cost_asc", desc: "cost_desc", defaultOrder: "desc" }}
             sortOption={sortOption}
             onSortChange={onSortChange}
           />

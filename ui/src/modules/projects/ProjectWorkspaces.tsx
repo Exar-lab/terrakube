@@ -1,13 +1,15 @@
-import { Alert, Button, message, Table, Typography } from "antd";
+import { Alert, Button, message, Table, Tooltip, Typography } from "antd";
 import type { TableProps } from "antd";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import WorkspaceStatusTag from "@/components/display/WorkspaceStatusTag";
 import VcsLogo from "@/components/display/VcsLogo";
 import LastRun from "@/modules/workspaces/components/LastRun";
+import EstimatedSpendRollupCard from "@/modules/workspaces/components/EstimatedSpendRollupCard";
 import { WorkspaceListItem, WorkspacePageRequest } from "@/modules/workspaces/types";
 import workspaceService from "@/modules/workspaces/workspaceService";
 import { WorkspaceSortOption } from "@/modules/workspaces/utils/workspaceSort";
+import { COST_ESTIMATION_DISCLAIMER, formatMonthlyCost } from "@/modules/workspaces/utils/costFormat";
 import getVcsNameFromUrl from "@/modules/workspaces/utils/getVcsNameFromUrl";
 import getVcsTypeFromUrl from "@/modules/workspaces/utils/getVcsTypeFromUrl";
 import { ErrorInformation } from "@/modules/api/types";
@@ -34,6 +36,9 @@ function toSortOption(sorter: Sorter): WorkspaceSortOption {
   }
   if (active?.columnKey === "name" && active.order) {
     return active.order === "ascend" ? "name_asc" : "name_desc";
+  }
+  if (active?.columnKey === "currentMonthlyCost" && active.order) {
+    return active.order === "ascend" ? "cost_asc" : "cost_desc";
   }
   return DEFAULT_SORT;
 }
@@ -153,6 +158,21 @@ export default function ProjectWorkspaces({ orgid, projectId }: Props) {
       render: (lastRun: string | undefined) => <LastRun lastRun={lastRun} />,
     },
     {
+      title: "Est. Monthly Cost",
+      dataIndex: "currentMonthlyCost",
+      key: "currentMonthlyCost",
+      width: 165,
+      align: "right",
+      sorter: true,
+      sortDirections: ["descend", "ascend"],
+      sortOrder: sort === "cost_desc" ? "descend" : sort === "cost_asc" ? "ascend" : null,
+      render: (cost: number | null | undefined, record: WorkspaceListItem) => (
+        <Tooltip title={COST_ESTIMATION_DISCLAIMER}>
+          <span>{formatMonthlyCost(cost, record.costCurrency)}</span>
+        </Tooltip>
+      ),
+    },
+    {
       title: "Repository",
       dataIndex: "normalizedSource",
       key: "normalizedSource",
@@ -198,16 +218,19 @@ export default function ProjectWorkspaces({ orgid, projectId }: Props) {
           }
         />
       ) : (
-        <Table<WorkspaceListItem>
-          className="project-workspaces-table"
-          rowKey="id"
-          loading={loading}
-          dataSource={workspaces}
-          columns={columns}
-          onChange={handleTableChange}
-          pagination={{ current: page, pageSize, total, showSizeChanger: true }}
-          locale={{ emptyText: loaded ? "No workspaces assigned to this project yet." : "Loading workspaces..." }}
-        />
+        <>
+          <EstimatedSpendRollupCard workspaces={workspaces} title="Estimated Project Monthly Spend" />
+          <Table<WorkspaceListItem>
+            className="project-workspaces-table"
+            rowKey="id"
+            loading={loading}
+            dataSource={workspaces}
+            columns={columns}
+            onChange={handleTableChange}
+            pagination={{ current: page, pageSize, total, showSizeChanger: true }}
+            locale={{ emptyText: loaded ? "No workspaces assigned to this project yet." : "Loading workspaces..." }}
+          />
+        </>
       )}
     </div>
   );

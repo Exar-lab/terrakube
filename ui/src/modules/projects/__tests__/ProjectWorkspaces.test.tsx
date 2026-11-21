@@ -92,8 +92,22 @@ describe("ProjectWorkspaces", () => {
       "Name",
       "Status",
       "Last run",
+      "Est. Monthly Cost",
       "Repository",
     ]);
+  });
+
+  it("displays estimated monthly cost, rollup card, and supports sorting by cost", async () => {
+    listWorkspacePage.mockResolvedValue(page([workspace({ currentMonthlyCost: 125.4, costCurrency: "USD" })]));
+    renderTab();
+
+    expect(await screen.findByText("Estimated Project Monthly Spend")).toBeInTheDocument();
+    expect(screen.getAllByText("$125.40/mo").length).toBeGreaterThanOrEqual(2);
+
+    await userEvent.click(screen.getByText("Est. Monthly Cost"));
+    await waitFor(() => expect(lastRequest().sort).toBe("cost_desc"));
+    await userEvent.click(screen.getByText("Est. Monthly Cost"));
+    await waitFor(() => expect(lastRequest().sort).toBe("cost_asc"));
   });
 
   it("shows the workflow instead of a repository for CLI and API driven workspaces", async () => {

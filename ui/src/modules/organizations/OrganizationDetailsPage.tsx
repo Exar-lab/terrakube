@@ -3,6 +3,7 @@ import PageWrapper from "@/components/layout/PageWrapper/PageWrapper";
 import { ImportOutlined, PlusOutlined } from "@ant-design/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import WorkspaceFilter from "@/modules/workspaces/components/WorkspaceFilter";
+import EstimatedSpendRollupCard from "@/modules/workspaces/components/EstimatedSpendRollupCard";
 import { WorkspaceListItem, WorkspacePageInfo, WorkspacePageRequest } from "@/modules/workspaces/types";
 import { JobStatus } from "@/domain/types";
 import { Link, useParams } from "react-router-dom";
@@ -264,6 +265,11 @@ export default function OrganizationsDetailPage({ organizationName, setOrganizat
             onGroupByProjectChange={filterState.setGroupByProject}
           />
         )}
+        <EstimatedSpendRollupCard
+          workspaces={workspaces}
+          title="Estimated Monthly Spend (Current Page)"
+          showProjectBreakdown
+        />
         {listViewMode === "compact" && id && (
           <WorkspaceTable
             organizationId={id}
